@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <input id="imgInp" type="file" accept="image/*;capture=camera" capture="camera" >
+    <img id="img" src="">
+    <div id="result"></div>
+  </body>
+  <script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="/javascripts/glfx.js"></script>
+  <script type="text/javascript">
+  function dataURItoBlob(dataURI) {
+	    var binary = atob(dataURI.split(',')[1]);
+	    var array = [];
+	    for(var i = 0; i < binary.length; i++) {
+	        array.push(binary.charCodeAt(i));
+	    }
+	    return new Blob([new Uint8Array(array)], {type: 'image/png'});
+	}
+  var canvas = fx.canvas();
+  var image =$("#img"); 
+  var input = $("#imgInp").on('change' , function(e){
+      var img = new Image;
+      img.src = URL.createObjectURL(e.target.files[0]);
+      img.onload = function() {
+    	  var texture = canvas.texture(img);
+    	  canvas.draw(texture).hueSaturation(1, -1).unsharpMask(200, 1).denoise(10).brightnessContrast(0.3, 1).update();
+    	  //canvas.draw(texture).edgeWork(4).unsharpMask(0, 5).sepia(1).update();
+    	  image.attr("src",canvas.toDataURL('image/png'));
+    	  var preview = canvas.toDataURL({format:"png",multiplier:0.5,left:0,right:0 , width:canvas.width , height:canvas.height});
+          var previewblobData = dataURItoBlob(preview);
+	
+    	  var formData = new FormData();
+    	  formData.append("picture", previewblobData  , "test.png");
+    	  $.ajax({ url: '/upload',
+    		  data: formData, processData: false, contentType: false, type: 'POST', success: function(data){ 
+    			 console.log(data['results']);
+    			 for(var i =0 ; i < data['results'].length ; i++){
+					    	$("#result").append(" Q"+(i+1)+" : "+data['results'][i]);			 
+    			 }
+    		  }}).fail(function(){
+  				alert("내부 서버 오류입니다.");
+  			});;
+          //ctx.drawImage(img, 0,0);
+      }
+  });
+	</script>
+</html>

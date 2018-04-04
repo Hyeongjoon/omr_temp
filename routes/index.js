@@ -23,13 +23,17 @@ router.post('/upload' , function(req, res, next){
 	 form.uploadDir = __dirname;
 
 	 form.parse(req, function(err, fields, files) {
-	        if (err) next(err);
+	        if (err){
+	        	console.log(err);
+	        	next(err);
+	        };
 	        var targetPath = form.uploadDir+'/'+files.picture.name;
 	        var fileName = files.picture.name;
 	        fs.rename(files.picture.path, form.uploadDir+'/'+files.picture.name , function(callback){
 	        	options.args = ['--input' , __dirname+'/'+fileName]
 	        	PythonShell.run('omr.py', options, function (err, results) {
 	        			if(err){
+	        				console.log(err);
 	        				res.status(500).json({err : "error"});
 	        			} else{
 	        				res.json({results : results});

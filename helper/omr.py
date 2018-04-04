@@ -2,7 +2,7 @@ import argparse
 import cv2
 import math
 import numpy as np
-import logging
+from unittest.mock import right
 
 CORNER_FEATS = (
     0.322965313273202,
@@ -96,23 +96,30 @@ def get_outmost_points(contours):
     all_points = np.concatenate(contours)
     return get_bounding_rect(all_points)
 
-def perspective_transform(img, points):
+def perspective_transform(img, points , realCorners):
     """Transform img so that points are the new corners"""
-
+    
+    
     source = np.array(
-        points,
+        realCorners,
         dtype="float32")
-
     dest = np.array([
-        [TRANSF_SIZE, TRANSF_SIZE],
+        [TRANSF_SIZE+0, TRANSF_SIZE+0],
         [0, TRANSF_SIZE],
-        [0, 0],
-        [TRANSF_SIZE, 0]],
+        [0, -0],
+        [TRANSF_SIZE, +0]],
         dtype="float32")
 
     img_dest = img.copy()
+    
+    """source[2][0] = 361.
+    source[2][1] = 119.
+    source[3][0] = 840.
+    source[3][1] = 117."""
+    
+    
     transf = cv2.getPerspectiveTransform(source, dest)
-    warped = cv2.warpPerspective(img, transf, (TRANSF_SIZE, TRANSF_SIZE))
+    warped = cv2.warpPerspective(img, transf, (512, 512))
     return warped
 
 def sheet_coord_to_transf_coord(x, y):
@@ -125,16 +132,16 @@ def get_question_patch(transf, q_number):
     # Top left
     tl = sheet_coord_to_transf_coord(
         200,
-        1650 - 81 * (q_number - 1)
+        1650 - 82 * (q_number - 1)
     )
-    #logging.warning(tl)
+ #   logging.warning(tl)
     
     # Bottom right
     br = sheet_coord_to_transf_coord(
         650,
         1600 - 80 * (q_number - 1)
     )
-    #logging.warning(br)
+  #  logging.warning(br)
     return transf[tl[1]:br[1], tl[0]:br[0]]
 
 def get_question_patches(transf):
@@ -156,7 +163,7 @@ def draw_marked_alternative(question_patch, index):
 def get_marked_alternative(alternative_patches):
     means = list(map(np.mean, alternative_patches))
     sorted_means = sorted(means)
-
+    
     # Simple heuristic
     if sorted_means[0]/sorted_means[1] > .7:
         return None
@@ -190,12 +197,14 @@ def get_answers(source_file):
 
     contours = get_contours(im)
     corners = get_corners(contours)
-
+    realCorners = get_change_num(corners)
+    
+    
+    
     cv2.drawContours(im_orig, corners, -1, (0, 255, 0), 3)
 
     outmost = order_points(get_outmost_points(corners))
-
-    transf = perspective_transform(im_orig, outmost)
+    transf = perspective_transform(im_orig, outmost , realCorners)
 
     answers = []
     for i, q_patch in enumerate(get_question_patches(transf)):
@@ -211,7 +220,60 @@ def get_answers(source_file):
     #cv2.imshow('bw', im)
 
     return answers, transf
+def get_change_num(corners):
+    
+    a= 1000000
+    b = 0
+    c = 0
+    d = 0
+    e = 1000000
+    f = 1000000
+    g = 0
+    h = 1000000
+    temp = ["","","",""]
+    for i in range(0 , 4):
+        temp[i] = corners[i][0][0][0]*corners[i][0][0][0] +corners[i][0][0][1]*corners[i][0][0][1] 
 
+    for i in range(1 ,4):
+        for j in range(0 , i):
+            if(temp[j]>temp[i]):
+                temp1 = temp[j]
+                temp[j] = temp[i]
+                temp[i] = temp1
+                temp2 = corners[j]
+                corners[j] = corners[i]
+                corners[i] = temp2
+    maxLength = 0
+    for i in corners[0]:
+        for j in corners[3]:
+            tempa =(i[0][0] - j[0][0])*(i[0][0] - j[0][0]) +(i[0][1] - j[0][1])*(i[0][1] - j[0][1])
+            if tempa>maxLength:
+                temp[0] = i[0]
+                temp[3] = j[0]
+                maxLength = tempa
+                
+    maxLength = 0
+    
+    for i in corners[1]:
+        for j in corners[2]:
+            tempa =(i[0][0] - j[0][0])*(i[0][0] - j[0][0]) +(i[0][1] - j[0][1])*(i[0][1] - j[0][1])
+            if tempa>maxLength:
+                temp[1] = i[0]
+                temp[2] = j[0]
+                maxLength = tempa
+    tempa = temp[2]
+    temp[2] = temp[0]
+    temp[0] = tempa
+    
+    tempa = temp[1]
+    temp[1] = temp[3]
+    temp[3] = tempa
+    
+    tempa = temp[0]
+    temp[0] = temp[1]
+    temp[1] = tempa
+    
+    return temp;
 def main():
     parser = argparse.ArgumentParser()
 
@@ -221,12 +283,33 @@ def main():
         required=True,
         type=str)
 
+    parser.add_argument(
+        "--output",
+        help="Output image filename",
+        type=str)
+
+    parser.add_argument(
+        "--show",
+        action="store_true",
+        help="Displays annotated image")
+
     args = parser.parse_args()
     
     answers, im = get_answers(args.input)
 
     for i, answer in enumerate(answers):
-        print("{}".format(answer))
+        print("{}".format( answer))
+
+    if args.output:
+        cv2.imwrite(args.output, im)
+        
+
+    if args.show:
+        cv2.imshow('trans', im)
+
+        
+        while True:
+            cv2.waitKey()
 
 if __name__ == '__main__':
     main()

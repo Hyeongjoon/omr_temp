@@ -124,34 +124,41 @@ def perspective_transform(img, points , realCorners):
 
 def sheet_coord_to_transf_coord(x, y):
     return list(map(lambda n: int(np.round(n)), (
-        TRANSF_SIZE * x/744.055,
-        TRANSF_SIZE * (1 - y/1934.362)
+        TRANSF_SIZE * x/1470.055,
+        TRANSF_SIZE * (1 - y/1910.362)
     )))
 
 def get_question_patch(transf, q_number):
+    left_end = 189;
+    right_end = 639;
+    if(q_number>20):
+        q_number = q_number-20;
+        left_end = 940;
+        right_end = 1490;
+        
     # Top left
     tl = sheet_coord_to_transf_coord(
-        200,
-        1650 - 82 * (q_number - 1)
+        left_end,
+        1650 - 81 * (q_number - 1)
     )
  #   logging.warning(tl)
     
     # Bottom right
     br = sheet_coord_to_transf_coord(
-        650,
-        1600 - 80 * (q_number - 1)
+        right_end,
+        1600 - 81 * (q_number - 1)
     )
   #  logging.warning(br)
     return transf[tl[1]:br[1], tl[0]:br[0]]
 
 def get_question_patches(transf):
-    for i in range(1, 21):
+    for i in range(1, 41):
         yield get_question_patch(transf, i)
 
 def get_alternative_patches(question_patch):
     for i in range(5):
         x0, _ = sheet_coord_to_transf_coord(100 * i, 0)
-        x1, _ = sheet_coord_to_transf_coord(50 + 100 * i, 0)
+        x1, _ = sheet_coord_to_transf_coord(60 + 100 * i, 0)
         yield question_patch[:, x0:x1]
 
 def draw_marked_alternative(question_patch, index):

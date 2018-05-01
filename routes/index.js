@@ -31,7 +31,7 @@ router.post('/upload' , function(req, res, next){
 	        var fileName = files.picture.name;
 	        fs.rename(files.picture.path, form.uploadDir+'/'+files.picture.name , function(callback){
 	        	options.args = ['--input' , __dirname+'/'+fileName]
-	        	PythonShell.run('omr.py', options, function (err, results) {
+	        	PythonShell.run('omr60.py', options, function (err, results) {
 	        			if(err){
 	        				console.log(err);
 	        				res.status(500).json({err : "error"});

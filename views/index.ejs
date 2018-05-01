@@ -12,6 +12,7 @@
   </body>
   <script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
   <script type="text/javascript" src="/javascripts/glfx.js"></script>
+  <script type="text/javascript" src="/javascripts/exif.js"></script>
   <script type="text/javascript" src="/javascripts/load-image.all.min.js"></script>
   <script type="text/javascript">
 //Grab elements, create settings, etc.
@@ -27,38 +28,50 @@
   var MAX_WIDTH = 1200
   var MAX_HEIGHT = 1600
   
+  
   var image =$("#img");
   var input = $("#imgInp").on('change' , function(e){
       var img = new Image();
-      //img.src = URL.createObjectURL(e.target.files[0]);
-    	    var loadingImage = loadImage(e.target.files[0],
-    	        function (img) {
-    	    	  var texture = canvas.texture(img);
-    	    	  canvas.draw(texture).hueSaturation(1, -1).unsharpMask(200, 1).denoise(10).brightnessContrast(0.3, 1).update();
-    	    	  
-    	    	  image.attr("src",canvas.toDataURL('image/png'));
-    	    	  var preview = canvas.toDataURL({format:"png",multiplier:0.5,left:0,right:0 , width:canvas.width , height:canvas.height});
-    	          var previewblobData = dataURItoBlob(preview);
-    		
-    	    	  var formData = new FormData();
-    	    	  formData.append("picture", previewblobData  , "test.png");
-    	    	  $.ajax({ url: '/upload',
-    	    		  data: formData, processData: false, contentType: false, type: 'POST', success: function(data){ 
-    	    			 console.log(data['results']);
-    	    			 for(var i =0 ; i < data['results'].length ; i++){
-    						    	$("#result").append(" Q"+(i+1)+" : "+data['results'][i]);			 
-    	    			 }
-    	    		  }}).fail(function(){
-    	  				alert("내부 서버 오류입니다.");
-    	  			});
-    	        },
-    	        {maxWidth: 1200,
-    	        	orientation:6
-				}
-    	    );
-    	    if (!loadingImage) {
-    	        // Alternative code ...
-    	    }
+      
+      loadImage.parseMetaData(
+    		  e.target.files[0],
+    		    function (data) {
+    			  	var orientation;
+    		        if (!data.imageHead) {
+    		        	orientation = 6;
+    		            return;
+    		        } else{
+    		        	orientation  = data.exif.get('Orientation');
+    		        }
+    		        var loadingImage = loadImage(e.target.files[0],
+    		    	        function (img) {
+    		    	    	  var texture = canvas.texture(img);
+    		    	    	  canvas.draw(texture).hueSaturation(1, -1).unsharpMask(200, 1).denoise(10).brightnessContrast(0.3, 1).update();
+    		    	    	  
+    		    	    	  image.attr("src",canvas.toDataURL('image/png'));
+    		    	    	  var preview = canvas.toDataURL({format:"png",multiplier:0.5,left:0,right:0 , width:canvas.width , height:canvas.height});
+    		    	          var previewblobData = dataURItoBlob(preview);
+    		    		
+    		    	    	  var formData = new FormData();
+    		    	    	  formData.append("picture", previewblobData  , "test.png");
+    		    	    	  $.ajax({ url: '/upload',
+    		    	    		  data: formData, processData: false, contentType: false, type: 'POST', success: function(data){ 
+    		    	    			 for(var i =0 ; i < data['results'].length ; i++){
+    		    						    	$("#result").append(" Q"+(i+1)+" : "+data['results'][i]);			 
+    		    	    			 }
+    		    	    		  }}).fail(function(){
+    		    	  				alert("내부 서버 오류입니다.");
+    		    	  			});
+    		    	        },
+    		    	        {maxWidth: 1200,
+    		    	        	orientation:orientation 
+    						}
+    		    	    );
+    		    },
+    		    {
+    		        
+    		    }
+    		);
   });
  	</script>
 </html>

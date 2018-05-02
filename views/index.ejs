@@ -39,9 +39,17 @@
     			  	var orientation;
     		        if (!data.imageHead) {
     		        	orientation = 6;
-    		            return;
     		        } else{
     		        	orientation  = data.exif.get('Orientation');
+    		        	if(data.exif.get('Make')== undefined){//아이폰일때
+    		        		if(orientation==6){
+    		        			orientation =7
+    		        		} else if(orientation==1){
+    		        			orientation = 4;
+    		        		} else if(orientation==3){
+    		        			orientation =2;
+    		        		}
+    		        	};
     		        }
     		        var loadingImage = loadImage(e.target.files[0],
     		    	        function (img) {

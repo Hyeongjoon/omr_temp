@@ -21,7 +21,7 @@ router.post('/upload' , function(req, res, next){
 	 var form = new formidable.IncomingForm();
 	 form.multiples = true;
 	 form.uploadDir = __dirname;
-
+	 
 	 form.parse(req, function(err, fields, files) {
 	        if (err){
 	        	console.log(err);
@@ -31,13 +31,18 @@ router.post('/upload' , function(req, res, next){
 	        var fileName = files.picture.name;
 	        fs.rename(files.picture.path, form.uploadDir+'/'+files.picture.name , function(callback){
 	        	options.args = ['--input' , __dirname+'/'+fileName]
-	        	PythonShell.run('omr60.py', options, function (err, results) {
+	        	PythonShell.run('omr'+fields['omr']+'.py', options, function (err, results) {
 	        			if(err){
 	        				console.log(err);
 	        				res.status(500).json({err : "error"});
 	        			} else{
+	        				 res.header("Access-Control-Allow-Origin", "*");
+	        				 res.header("Access-Control-Allow-Headers", "X-Requested-With");
 	        				res.json({results : results});
 	        			}
+	        	        fs.unlink(form.uploadDir+'/'+files.picture.name, function (err) {
+	        	        	if (err) throw err;
+	        	        	});
 	        		});
 	        });
 	 });

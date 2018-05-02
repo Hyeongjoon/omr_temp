@@ -2,7 +2,9 @@ import argparse
 import cv2
 import math
 import numpy as np
-from unittest.mock import right
+#from unittest.mock import right
+
+#from unittest import mock
 
 CORNER_FEATS = (
     0.322965313273202,
@@ -125,7 +127,7 @@ def perspective_transform(img, points , realCorners):
 def sheet_coord_to_transf_coord(x, y):
     return list(map(lambda n: int(np.round(n)), (
         TRANSF_SIZE * x/1470.055,
-        TRANSF_SIZE * (1 - y/1910.362)
+        TRANSF_SIZE * (1 - y/1930.362)
     )))
 
 def get_question_patch(transf, q_number):

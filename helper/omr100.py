@@ -12,7 +12,7 @@ CORNER_FEATS = (
     0.998754685666376,
 )
 
-TRANSF_SIZE = 512
+TRANSF_SIZE = 1024
 
 
 def normalize(im):
@@ -119,7 +119,7 @@ def perspective_transform(img, points , realCorners):
     source[3] = temp[1];
     
     transf = cv2.getPerspectiveTransform(source, dest)
-    warped = cv2.warpPerspective(img, transf, (512, 512))
+    warped = cv2.warpPerspective(img, transf, (1024, 1024))
     return warped
 
 def sheet_coord_to_transf_coord(x, y):
@@ -129,24 +129,24 @@ def sheet_coord_to_transf_coord(x, y):
     )))
 
 def get_question_patch(transf, q_number):
-    left_end = 195;
-    right_end = 645;
+    left_end = 210;
+    right_end = 660;
     if(q_number>20 and q_number<41):
         q_number = q_number-20;
-        left_end = 942;
-        right_end = 1492;
+        left_end = 952;
+        right_end = 1502;
     elif(q_number>40 and q_number<61):
         q_number = q_number-40;
-        left_end = 1691;
-        right_end = 2341;
+        left_end = 1701;
+        right_end = 2351;
     elif(q_number>60 and q_number<81):
         q_number = q_number-60;
-        left_end = 2440;
-        right_end = 3190;
+        left_end = 2457;
+        right_end = 3207;
     elif(q_number>80):
         q_number = q_number-80;
-        left_end = 3189;
-        right_end = 4039;
+        left_end = 3199;
+        right_end = 4049;
         
     # Top left
     tl = sheet_coord_to_transf_coord(
@@ -190,7 +190,7 @@ def get_marked_alternative(alternative_patches):
     return np.argmin(means)
 
 def get_letter(alt_index):
-    return ["1", "2", "3", "4", "5"][alt_index] if alt_index is not None else "N/A"
+    return ["1", "2", "3", "4", "5"][alt_index] if alt_index is not None else ""
 
 def get_answers(source_file):
     """Run the full pipeline:
